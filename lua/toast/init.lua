@@ -16,7 +16,7 @@ function M.generate_completion()
   local content = table.concat(lines, "\n")
 
   ui.open_input_modal({
-    title = " Describe changes ",
+    title = " " .. M.config.model .. " ",
     width = 80,
     height = 5,
   }, function(input)
@@ -48,18 +48,20 @@ function M.generate_completion()
       { "opencode", "-m", M.config.model, "run", prompt },
       { text = true },
       function(result)
-        local new_lines = vim.split(result.stdout, "\n")
-
         vim.schedule(function()
-          vim.api.nvim_buf_set_lines(0, 0, -1, true, new_lines)
           close_loading_modal()
+
+          if result.code ~= 0 then
+            vim.notify(result.stderr, vim.log.levels.ERROR)
+            return
+          end
+
+          local new_lines = vim.split(result.stdout, "\n")
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, new_lines)
         end)
       end
     )
   end)
-end
-
-function M.test_modal()
 end
 
 return M
