@@ -95,4 +95,4 @@ vim.keymap.set('n', '<leader>t', ':Toast<CR>', { desc = 'Toast: Generate complet
 
 ## License
 
-MIT
+MIT[LICENSE]
