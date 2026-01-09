@@ -1,10 +1,11 @@
 local M = {}
 
-local ui = require("toast.ui")
+local ui = require "toast.ui"
+local p = require "toast.prompt"
+local utils = require "toast.utils"
 
 M.config = {
   model = "anthropic/claude-sonnet-4-5",
-  display_errors = false,
 }
 
 function M.setup(opts)
@@ -12,8 +13,26 @@ function M.setup(opts)
 end
 
 function M.generate_completion()
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local lines = {}
+  local start_line = 0
+  local end_line = -1
+  local buf = vim.api.nvim_get_current_buf()
+
+  local is_visual = vim.fn.visualmode() ~= ""
+  if is_visual then
+    start_line = vim.fn.line("'<") - 1
+    end_line = vim.fn.line("'>")
+  end
+
+  lines = vim.api.nvim_buf_get_lines(buf, start_line, end_line, false)
+
+  if #lines == 0 then
+    vim.notify("Any content found")
+    return
+  end
+
   local content = table.concat(lines, "\n")
+  local filetype = vim.bo.filetype
 
   ui.open_input_modal({
     title = " " .. M.config.model .. " ",
@@ -24,23 +43,7 @@ function M.generate_completion()
       vim.notify("Input not valid")
       return
     end
-
-    local filetype = vim.bo.filetype
-
-    local prompt = table.concat({
-      "Language: " .. filetype,
-      "",
-      "Code to be modified:",
-      content,
-      "",
-      "User request: " .. input,
-      "",
-      "Rules:",
-      "- Return only the code to be replaced, nothing more",
-      "- If there's something to add that is not code, make it as comments",
-      "- No markdown code blocks",
-      "- Preserve original indentation",
-    }, "\n")
+    local prompt = p.get_prompt(filetype, content, input)
 
     local close_loading_modal = ui.open_loading_modal()
 
@@ -56,8 +59,10 @@ function M.generate_completion()
             return
           end
 
-          local new_lines = vim.split(result.stdout, "\n")
-          vim.api.nvim_buf_set_lines(0, 0, -1, false, new_lines)
+          local output = utils.strip_markdown_blocks(result.stdout)
+
+          local new_lines = vim.split(output, "\n")
+          vim.api.nvim_buf_set_lines(buf, start_line, end_line, false, new_lines)
         end)
       end
     )

@@ -1,13 +1,16 @@
 # toast-nvim
 
-A Neovim plugin that integrates with OpenCode to provide AI-powered code completions and modifications directly in your editor.
+A Neovim plugin that integrates with OpenCode to provide AI-powered code transformations and modifications directly in your editor.
 
 ## Features
 
-- Generate AI-powered code completions and modifications using OpenCode
-- Context-aware code generation based on current buffer content
-- Support for multiple AI models via OpenCode
-- Simple and intuitive user interface
+- AI-powered code transformations using OpenCode CLI
+- Context-aware code generation based on current buffer or visual selection
+- Support for all AI models available through OpenCode
+- Beautiful modal UI with loading indicator and animated spinner
+- Deterministic code transformation with no markdown formatting
+- Works on entire buffer or visual selections
+- Language-aware prompts that respect your filetype
 
 ## Requirements
 
@@ -20,11 +23,10 @@ A Neovim plugin that integrates with OpenCode to provide AI-powered code complet
 
 ```lua
 {
-  "toast",
+  "davitostesos/toast-nvim",
   config = function()
     require("toast").setup({
-      model = "anthropic/claude-sonnet-4-5",  -- Default model
-      display_errors = false,                  -- Display error messages
+      model = "anthropic/claude-sonnet-4-5",
     })
   end
 }
@@ -34,11 +36,10 @@ A Neovim plugin that integrates with OpenCode to provide AI-powered code complet
 
 ```lua
 use {
-  'toast',
+  'davitostesos/toast-nvim',
   config = function()
     require('toast').setup({
       model = "anthropic/claude-sonnet-4-5",
-      display_errors = false,
     })
   end
 }
@@ -47,16 +48,7 @@ use {
 ### Using [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
-Plug 'toast'
-```
-
-Then in your `init.lua`:
-
-```lua
-require('toast').setup({
-  model = "anthropic/claude-sonnet-4-5",
-  display_errors = false,
-})
+Plug 'davitostesos/toast-nvim'
 ```
 
 ## Configuration
@@ -67,9 +59,6 @@ The plugin accepts the following configuration options:
 require('toast').setup({
   -- The AI model to use (any model supported by OpenCode)
   model = "anthropic/claude-sonnet-4-5",
-  
-  -- Whether to display error messages
-  display_errors = false,
 })
 ```
 
@@ -77,22 +66,38 @@ require('toast').setup({
 
 ### Command
 
-The plugin provides a `:Toast` command that you can use to generate code completions:
+The plugin provides a `:Toast` command that you can use to transform code:
 
 1. Open a file in Neovim
-2. Run `:Toast`
-3. Enter your prompt
-4. Wait for the AI to generate the code
-5. The entire buffer will be replaced with the generated code
+2. Optionally, select code in visual mode to transform only that selection
+3. Run `:Toast`
+4. Enter your transformation request in the modal window (press `<CR>` or `<C-CR>` to submit, `q` or `<Esc>` to cancel)
+5. Wait for the AI to generate the transformed code
+6. The selected region (or entire buffer) will be replaced with the generated code
 
-### Keybinding
+### Modal Controls
 
-You can add a keybinding for quick access:
+When the input modal appears:
+- `<CR>` (normal mode) - Submit the request
+- `<C-CR>` (insert or normal mode) - Submit the request
+- `q` (normal mode) - Cancel
+- `<Esc>` (normal mode) - Cancel
+
+### Visual Mode
+
+Toast works seamlessly with visual selections:
 
 ```lua
-vim.keymap.set('n', '<leader>t', ':Toast<CR>', { desc = 'Toast: Generate completion' })
+-- Select code in visual mode, then run :Toast
+vim.keymap.set('v', '<leader>t', ':Toast<CR>', { desc = 'Toast: Transform selection' })
 ```
 
-## License
+### Keybinding Examples
 
-MIT[LICENSE]
+```lua
+-- Transform entire buffer
+vim.keymap.set('n', '<leader>t', ':Toast<CR>', { desc = 'Toast: Transform buffer' })
+
+-- Transform visual selection
+vim.keymap.set('v', '<leader>t', ':Toast<CR>', { desc = 'Toast: Transform selection' })
+```
